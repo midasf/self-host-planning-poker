@@ -1,0 +1,121 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: planning-poker
+
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: planning-poker-ghcr
+  namespace: planning-poker
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: planning-poker-ghcr
+    template:
+      type: kubernetes.io/dockerconfigjson
+      data:
+        .dockerconfigjson: '{"auths":{"ghcr.io":{"username":"midasf","password":"{{ .token }}","auth":"{{ printf "midasf:%s" .token | b64enc }}"}}}'
+  data:
+    - secretKey: token
+      remoteRef:
+        key: planning-poker/ghcr
+        property: token
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: planning-poker
+  namespace: planning-poker
+  labels:
+    app: planning-poker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: planning-poker
+  template:
+    metadata:
+      labels:
+        app: planning-poker
+    spec:
+      imagePullSecrets:
+        - name: planning-poker-ghcr
+      containers:
+        - name: planning-poker
+          image: ghcr.io/midasf/self-host-planning-poker:latest
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              cpu: 10m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: planning-poker
+  namespace: planning-poker
+spec:
+  selector:
+    app: planning-poker
+  ports:
+    - port: 8000
+      targetPort: 8000
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: planning-poker
+  namespace: planning-poker
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: poker.k8s.hacktheplanet.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: planning-poker
+                port:
+                  number: 8000
+  tls:
+    - secretName: k8s-wildcard-tls
+      hosts:
+        - poker.k8s.hacktheplanet.nl
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: planning-poker-home
+  namespace: planning-poker
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: poker.home.hacktheplanet.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: planning-poker
+                port:
+                  number: 8000
+  tls:
+    - secretName: k8s-wildcard-tls
+      hosts:
+        - poker.home.hacktheplanet.nl
