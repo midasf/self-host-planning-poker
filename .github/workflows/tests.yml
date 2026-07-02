@@ -40,7 +40,7 @@ jobs:
         name: Setup Node
         uses: actions/setup-node@v4.0.0
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
           cache-dependency-path: angular/package-lock.json
       -
@@ -58,7 +58,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4.0.0
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
           cache-dependency-path: angular/package-lock.json
       - name: Run linting
