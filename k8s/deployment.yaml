@@ -44,6 +44,7 @@ spec:
       labels:
         app: planning-poker
     spec:
+      automountServiceAccountToken: false
       imagePullSecrets:
         - name: planning-poker-ghcr
       containers:
@@ -51,8 +52,20 @@ spec:
           image: ghcr.io/midasf/self-host-planning-poker:latest
           securityContext:
             allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1001
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
           ports:
             - containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
           resources:
             requests:
               cpu: 10m

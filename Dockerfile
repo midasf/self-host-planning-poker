@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM docker.io/library/node:lts-slim AS node_builder
+FROM --platform=$BUILDPLATFORM docker.io/library/node:22-slim AS node_builder
 WORKDIR /angular
 COPY angular/ /angular
 RUN npm config set update-notifier false && \
