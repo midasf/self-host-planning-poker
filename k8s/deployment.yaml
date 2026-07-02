@@ -49,6 +49,8 @@ spec:
       containers:
         - name: planning-poker
           image: ghcr.io/midasf/self-host-planning-poker:latest
+          securityContext:
+            allowPrivilegeEscalation: false
           ports:
             - containerPort: 8000
           resources:
