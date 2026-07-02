@@ -21,7 +21,7 @@ jobs:
           cache: npm
           cache-dependency-path: angular/package-lock.json
 
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps
       - run: npm run lint
 
   ruff:

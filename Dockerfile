@@ -4,7 +4,7 @@ COPY angular/ /angular
 RUN npm config set update-notifier false && \
   npm config set fund false && \
   npm config set audit false && \
-  npm ci
+  npm ci --legacy-peer-deps
 RUN npm run build self-host-planning-poker
 
 FROM docker.io/library/python:3.11.7-alpine3.18
