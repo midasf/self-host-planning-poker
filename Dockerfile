@@ -12,7 +12,7 @@ RUN adduser -H -D -u 10001 -G root default
 WORKDIR /app
 COPY --chown=10001:0 flask/ ./
 COPY --chown=10001:0 --from=node_builder /angular/dist/self-host-planning-poker ./static
-RUN pip install --upgrade pip && \
+RUN pip install pip==26.1.2 && \
   pip install --requirement requirements.txt && \
   mkdir /data && \
   chown -R 10001:0 /app /data && \
