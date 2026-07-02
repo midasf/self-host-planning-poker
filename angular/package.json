@@ -64,5 +64,8 @@
     "karma-jasmine-html-reporter": "~2.1.0",
     "purgecss-webpack-plugin": "^5.0.0",
     "typescript": "~6.0.3"
+  },
+  "overrides": {
+    "esbuild": "0.28.1"
   }
 }
