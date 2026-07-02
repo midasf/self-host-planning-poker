@@ -1,0 +1,25 @@
+name: KICS Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  kics-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run KICS scan
+        uses: Checkmarx/kics-github-action@master
+        with:
+          path: '.'
+          output_formats: 'sarif'
+          output_path: 'kics-results'
+          exclude_paths: '.git,.github'
+          fail_on: 'high,critical'
