@@ -1,8 +1,8 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { PlayerState } from '../../model/events';
 import { filter, map, Observable, Subscription, tap, withLatestFrom } from 'rxjs';
 import { Deck, decksDict, displayCardValue } from '../../model/deck';
-import { AsyncPipe, KeyValue, KeyValuePipe, NgClass, NgFor } from '@angular/common';
+import { AsyncPipe, KeyValue, KeyValuePipe, NgClass } from '@angular/common';
 import { CurrentGameService } from '../current-game.service';
 import confetti from 'canvas-confetti';
 import { TranslocoDecimalPipe, TranslocoPercentPipe } from '@ngneat/transloco-locale';
@@ -12,8 +12,8 @@ import { TranslocoDirective } from '@ngneat/transloco';
     selector: 'shpp-turn-summary',
     templateUrl: './turn-summary.component.html',
     styleUrls: ['./turn-summary.component.scss'],
-    standalone: true,
-    imports: [TranslocoDirective, NgFor, NgClass, AsyncPipe, KeyValuePipe, TranslocoDecimalPipe, TranslocoPercentPipe]
+    changeDetection: ChangeDetectionStrategy.Eager,
+    imports: [TranslocoDirective, NgClass, AsyncPipe, KeyValuePipe, TranslocoDecimalPipe, TranslocoPercentPipe]
 })
 export class TurnSummaryComponent implements AfterViewInit, OnDestroy {
   private subscriptions: Subscription[] = [];

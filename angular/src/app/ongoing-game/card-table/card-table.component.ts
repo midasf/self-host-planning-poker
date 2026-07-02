@@ -1,18 +1,18 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { GameState } from '../../model/events';
 import { Subscription } from 'rxjs';
 import { Deck } from '../../model/deck';
 import { CurrentGameService } from '../current-game.service';
 import { PlayerHandComponent } from './player-hand/player-hand.component';
-import { KeyValuePipe, NgFor } from '@angular/common';
+import { KeyValuePipe } from '@angular/common';
 import { TranslocoDirective } from '@ngneat/transloco';
 
 @Component({
     selector: 'shpp-card-table',
     templateUrl: './card-table.component.html',
     styleUrls: ['./card-table.component.scss'],
-    standalone: true,
-    imports: [TranslocoDirective, NgFor, PlayerHandComponent, KeyValuePipe]
+    changeDetection: ChangeDetectionStrategy.Eager,
+    imports: [TranslocoDirective, PlayerHandComponent, KeyValuePipe]
 })
 export class CardTableComponent implements OnDestroy {
   state: GameState = {}

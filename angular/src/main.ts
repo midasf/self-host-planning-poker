@@ -1,4 +1,4 @@
-import { enableProdMode, Injectable } from '@angular/core';
+import { enableProdMode, Injectable, provideZoneChangeDetection } from '@angular/core';
 import {environment} from './environments/environment';
 import {AppComponent} from './app/app.component';
 import { provideTranslocoLocale } from '@ngneat/transloco-locale';
@@ -6,7 +6,7 @@ import {bootstrapApplication} from '@angular/platform-browser';
 import {provideRouter, Routes} from "@angular/router";
 import {usernameSetGuard} from "./app/shared/user-info/username-set.service";
 import {canActivateGame} from "./app/ongoing-game/current-game.service";
-import { HttpClient, provideHttpClient } from "@angular/common/http";
+import { HttpClient, provideHttpClient, withXhr } from "@angular/common/http";
 import { provideTransloco, Translation, translocoConfig, TranslocoLoader } from '@ngneat/transloco';
 import { APP_BASE_HREF, PathLocationStrategy, PlatformLocation } from '@angular/common';
 
@@ -25,7 +25,7 @@ const routes: Routes = [
     path: 'game/:gameId',
     loadComponent: () => import('./app/ongoing-game/ongoing-game-page.component'),
     canActivate: [ usernameSetGuard, canActivateGame ],
-    providers: [ provideHttpClient() ]
+    providers: [ provideHttpClient(withXhr()) ]
   },
   {
     path: 'set-username',
@@ -53,14 +53,14 @@ export class TranslocoHttpLoader implements TranslocoLoader {
 
 bootstrapApplication(AppComponent, {
     providers: [
-      provideTranslocoLocale({
+      provideZoneChangeDetection(),provideTranslocoLocale({
         langToLocaleMapping: {
           en: 'en-US',
           fr: 'fr-FR'
         }
       }),
       provideRouter(routes),
-      provideHttpClient(),
+      provideHttpClient(withXhr()),
       provideTransloco({
         config: translocoConfig({
           availableLangs: ['af', 'ar', 'ca', 'cs', 'da', 'de', 'el', 'en', 'es', 'fi', 'fr', 'he', 'hu', 'it', 'ja', 'ko',
