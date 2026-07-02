@@ -1,12 +1,10 @@
-import errno
 import os
-import sys
 import uuid
 
 from flask import Flask, request, session, render_template
 from flask_cors import CORS
 from flask_socketio import SocketIO, join_room, leave_room, emit
-from peewee import SqliteDatabase, OperationalError
+from peewee import SqliteDatabase
 
 from permission_check import check_db_file_permissions
 from gamestate.exceptions import PlanningPokerException
