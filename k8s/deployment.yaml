@@ -23,7 +23,7 @@ spec:
   data:
     - secretKey: token
       remoteRef:
-        key: planning-poker/ghcr
+        key: argocd/github
         property: token
 
 ---
