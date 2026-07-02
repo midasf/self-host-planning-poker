@@ -13,7 +13,7 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Run KICS scan
         uses: Checkmarx/kics-github-action@master
