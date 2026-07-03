@@ -3,3 +3,6 @@ kind: Kustomization
 resources:
   - deployment.yaml
   - argocd-repo-secret.yaml
+images:
+  - name: ghcr.io/midasf/self-host-planning-poker
+    newTag: sha-c7f39a9
