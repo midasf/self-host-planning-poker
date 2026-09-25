@@ -53,7 +53,7 @@ resource "aws_codebuild_project" "plan" {
 
   environment {
     compute_type = "BUILD_GENERAL1_SMALL"
-    image        = "aws/codebuild/standard:7.0"
+    image        = "aws/codebuild/standard:8.0"
     type         = "LINUX_CONTAINER"
 
     dynamic "environment_variable" {
@@ -91,7 +91,7 @@ resource "aws_codebuild_project" "apply" {
 
   environment {
     compute_type = "BUILD_GENERAL1_SMALL"
-    image        = "aws/codebuild/standard:7.0"
+    image        = "aws/codebuild/standard:8.0"
     type         = "LINUX_CONTAINER"
 
     dynamic "environment_variable" {
@@ -129,7 +129,7 @@ resource "aws_codebuild_project" "security" {
 
   environment {
     compute_type    = "BUILD_GENERAL1_SMALL"
-    image           = "aws/codebuild/standard:7.0"
+    image           = "aws/codebuild/standard:8.0"
     type            = "LINUX_CONTAINER"
     privileged_mode = true
 
