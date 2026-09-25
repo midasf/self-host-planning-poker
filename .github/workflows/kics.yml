@@ -23,3 +23,7 @@ jobs:
           output_path: 'kics-results'
           exclude_paths: '.git,.github'
           fail_on: 'high,critical'
+          # The action's node-based annotations/summary crash on the runner
+          # (GLIBC mismatch); the Go scan + SARIF still run. Disable them.
+          enable_annotations: false
+          enable_jobs_summary: false

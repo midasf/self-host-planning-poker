@@ -33,6 +33,10 @@ jobs:
           output_path: kics-results
           output_formats: json,sarif
           fail_on: high
+          # The action's node-based annotations/summary crash on the runner
+          # (GLIBC mismatch); the Go scan + SARIF still run. Disable them.
+          enable_annotations: false
+          enable_jobs_summary: false
 
       - name: Upload KICS SARIF
         if: always()
