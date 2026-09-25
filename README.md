@@ -1,15 +1,10 @@
 # Self-host Planning Poker
 
-A hassle-free Planning Poker application to deploy on your NAS.
-
-[![Docker Hub](https://img.shields.io/docker/v/axeleroy/self-host-planning-poker?sort=semver&logo=docker)](https://hub.docker.com/r/axeleroy/self-host-planning-poker/tags)
-[![Docker Hub](https://img.shields.io/docker/pulls/axeleroy/self-host-planning-poker?logo=docker)](https://hub.docker.com/r/axeleroy/self-host-planning-poker/tags)
-[![GitHub release](https://img.shields.io/github/v/release/axeleroy/self-host-planning-poker?logo=github&logoColor=959DA5)](https://github.com/axeleroy/self-host-planning-poker/pkgs/container/self-host-planning-poker)
+A hassle-free Planning Poker application that runs serverless on AWS.
 
 [![GitHub last commit](https://img.shields.io/github/last-commit/axeleroy/self-host-planning-poker?logo=github&logoColor=959DA5)](https://github.com/axeleroy/self-host-planning-poker/commits/main)
 [![License](https://img.shields.io/github/license/axeleroy/self-host-planning-poker?logo=github&logoColor=959DA5)](https://github.com/axeleroy/self-host-planning-poker/blob/main/LICENSE)
 [![Tests](https://github.com/axeleroy/self-host-planning-poker/actions/workflows/tests.yml/badge.svg)](https://github.com/axeleroy/self-host-planning-poker/actions/workflows/tests.yml)
-[![Docker build](https://github.com/axeleroy/self-host-planning-poker/actions/workflows/publish.yml/badge.svg)](https://github.com/axeleroy/self-host-planning-poker/actions/workflows/publish.yml)
 [![Crowdin](https://badges.crowdin.net/self-host-planning-poker/localized.svg)](https://crowdin.com/project/self-host-planning-poker)
 
 ## What is it?
@@ -24,7 +19,7 @@ It features:
   * Responsive layout
   * Vote summary
   * Translations _(English, French, German, Italian and Polish. [Contributions welcome!](#im-a-user-and-want-to-contribute-translations))_
- 
+
 It does not have fancy features like issues management, Jira integration or timers.
 
 ## Screenshots
@@ -33,40 +28,34 @@ It does not have fancy features like issues management, Jira integration or time
 
 ## Deployment
 
-Deploying the application is easy as it's self-contained in a single container.
-All you need is to create a volume to persist the games settings (ID, name and deck).
+The application runs **serverless on AWS**, deployed by a Terraform CI/CD
+pipeline that separates the **management** account (pipeline, state) from the
+**workload** account (the running app):
 
-### Docker
+- **`bootstrap/`** — run once in the management account. Creates the Terraform
+  state bucket, a CodeStar GitHub connection and a **CodePipeline**
+  (Source → Plan → Apply → Security).
+- **`infra/`** — the application, created in the workload account via a
+  cross-account assumed role: DynamoDB, the Lambdas (from [`aws/src/`](aws/src)),
+  the HTTP + WebSocket APIs, and the S3 + CloudFront front-end (behind WAF).
+- **`buildspec-*.yml`** — the pipeline steps: `terraform plan` / `apply`, then an
+  Angular build (with the API URLs baked in) synced to S3 and a CloudFront
+  invalidation.
+
 ```bash
-docker run \
-  -v planning-poker-data:/data \
-  -p 8000:8000 \
-  axeleroy/self-host-planning-poker:latest
+# 1. One-time, in the MANAGEMENT account
+cd bootstrap
+cp terraform.tfvars.example terraform.tfvars   # fill github + bucket + workload account
+terraform init && terraform apply
+# then activate the CodeStar connection in the AWS Console (see output)
+
+# 2. Push to main → the pipeline plans/applies infra/ in the workload account
+#    and deploys the front-end. No manual steps.
 ```
 
-### docker-compose
-```yml
-version: "3"
-services:
-  planning-poker:
-    image: axeleroy/self-host-planning-poker:latest
-    ports:
-      - 8000:8000
-    volumes:
-      - planning-poker-data:/data
-volumes:
-  planning-poker-data: {}
-```
-
-### Environment variables
-
-| Variable              | Meaning                                                                                                                                                                                                                                          | Example            |
-|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------|
-| `APP_ROOT` (optional) | Allows you to deploy to another path than `/`.<br>See [Configuration examples for deploying on sub‐paths](https://github.com/axeleroy/self-host-planning-poker/wiki/Configuration-examples-for-deploying-on-sub%E2%80%90paths) for more details. | `APP_ROOT=/poker/` |
-
-### Running behind a reverse-proxy
-
-Refer to [Socket.IO's documentation](https://socket.io/docs/v4/reverse-proxy/)  for setting up your reverse-proxy to work correctly with Socket.IO.
+The workload account is set via `target_account_id` / `target_account_role`
+(default `OrganizationAccountAccessRole`); the pipeline's CodeBuild role assumes
+that role to deploy. State stays in the management account.
 
 ### Customization
 
@@ -76,7 +65,7 @@ See [Customizing the application's style and icon](https://github.com/axeleroy/s
 
 ### I'm a developer and I want to help
 
-You are welcome to open Pull Requests resolving issues in the [Project](https://github.com/users/axeleroy/projects/1/views/1) or 
+You are welcome to open Pull Requests resolving issues in the [Project](https://github.com/users/axeleroy/projects/1/views/1) or
 tagged [pr-welcome](https://github.com/axeleroy/self-host-planning-poker/issues?q=is%3Aissue+is%3Aopen+label%3Apr-welcome).
 Don't forget to mention the issue you want to close 😉
 
@@ -93,48 +82,33 @@ your language. If your language is not available, feel free to contact me over C
 
 The app consists of two parts:
 
-* a [back-end](flask/) written in Python with [Flask](https://flask.palletsprojects.com/), [Flask-SocketIO](https://flask-socketio.readthedocs.io/en/latest/index.html) and [peewee](http://docs.peewee-orm.com/en/latest/).
-* a [front-end](angular/) written with [Angular](https://angular.io) and [Socket.IO](https://socket.io/).
+* a [back-end](aws/) written in Python, running on AWS Lambda behind API Gateway (HTTP + WebSocket) with DynamoDB for state, defined with Terraform ([`infra/`](infra/), [`bootstrap/`](bootstrap/)).
+* a [front-end](angular/) written with [Angular](https://angular.io), talking to the WebSocket API over the native `WebSocket` client.
 
 ### Back-end development
 
-You must first initialise a virtual environment and install the dependencies
+The serverless back-end lives in [`aws/`](aws/). Create a virtual environment and
+install the dev dependencies:
 
 ```sh
-# Run the following commands in the flask/ folder
-python3 -m venv env
-source env/bin/activate
-pip3 install -r requirements.txt
+# Run the following commands in the aws/ folder
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
 ```
 
-Then launching the development server is as easy as that:
-```bash
-FLASK_DEBUG=1 python app.py
-```
+Run the tests locally with `python -m pytest`. Deployment is handled by the
+Terraform pipeline (see [Deployment](#deployment)); the infrastructure lives in
+[`infra/`](infra/) and [`bootstrap/`](bootstrap/).
 
 #### Run unit tests
 
-After initializing the virtual environment, run this command in the `flask/` directory:
+After installing the dev dependencies, run this command in the `aws/` directory:
 ```sh
-python -m unittest
+python -m pytest
 ```
 
 ### Front-end development
-
-> <details>
-> <summary>
-> <b>Note:</b> You might want to test the front-end against a back-end. You can either follow the instructions in the
-> previous section to install and run it locally or use the following command to run it in a Docker container:
-> </summary>
->
-> ```bash
-> docker run --rm -it \
->   -v $(pwd)/flask:/app \
->   -p 5000:5000 \
->   python:3.11-slim \
->   bash -c "cd /app; pip install -r requirements.txt; FLASK_DEBUG=1 gunicorn --worker-class eventlet -w 1 app:app --bind 0.0.0.0:5000"
-> ```
-> </details>
 
 First make sure that [Node.js](https://nodejs.org/en/) (preferably LTS) is installed.
 Then, install dependencies and launch the development server
@@ -143,13 +117,4 @@ Then, install dependencies and launch the development server
 # Run the following commands in the angular/ folder
 npm install
 npm start
-```
-
-### Building Docker image
-
-```sh
-# After checking out the project
-docker build . -t axeleroy/self-host-planning-poker:custom
-# Alternatively, if you don't want to checkout the project
-docker build https://github.com/axeleroy/self-host-planning-poker -t axeleroy/self-host-planning-poker:custom
 ```

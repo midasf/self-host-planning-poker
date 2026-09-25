@@ -7,7 +7,6 @@ import { GameFormComponent } from '../shared/game-form/game-form.component';
 import { ContainerComponent } from '../shared/container/container.component';
 import { NavAppTitleComponent } from '../navigation-bar/app-title/nav-app-title.component';
 import { FooterComponent } from '../shared/footer/footer.component';
-import { PathLocationStrategy } from '@angular/common';
 
 @Component({
     selector: 'shpp-new-game-page',
@@ -24,15 +23,14 @@ import { PathLocationStrategy } from '@angular/common';
 export default class NewGamePageComponent {
 
   constructor(private http: HttpClient,
-              private router: Router,
-              private pls: PathLocationStrategy) { }
+              private router: Router) { }
 
   onNewGame(newGame: {name: string, deck: Deck}): void {
     const body = {
       name: newGame.name,
       deck: newGame.deck.name
     }
-    this.http.post(`${ environment.backendRootOverride ?? this.pls.getBaseHref() }create`, body, { responseType: 'text' })
+    this.http.post(`${ environment.httpApiUrl }/create`, body, { responseType: 'text' })
       .subscribe((gameId) => this.router.navigate(['game', gameId]));
   }
 

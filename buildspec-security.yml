@@ -1,0 +1,32 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - mkdir -p reports
+      # Skip the DAST scan gracefully until a target URL is configured.
+      - if [ -z "${TARGET_URL}" ]; then echo "TARGET_URL not set — skipping OWASP ZAP scan."; exit 0; fi
+      - docker pull ghcr.io/zaproxy/zaproxy:stable
+
+  build:
+    commands:
+      - if [ -z "${TARGET_URL}" ]; then exit 0; fi
+      - >-
+        docker run --rm
+        -v "$(pwd)/reports:/zap/wrk:rw"
+        --user root
+        ghcr.io/zaproxy/zaproxy:stable
+        zap-baseline.py
+        -t "${TARGET_URL}"
+        -r zap-report.html
+        -J zap-report.json
+        -x zap-report.xml
+        -I
+      - echo "ZAP scan complete — check the Security stage artifacts for findings."
+
+artifacts:
+  files:
+    - "reports/zap-report.html"
+    - "reports/zap-report.json"
+    - "reports/zap-report.xml"
+  discard-paths: yes

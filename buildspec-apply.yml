@@ -1,0 +1,58 @@
+version: 0.2
+
+env:
+  variables:
+    TF_VERSION: "1.15.8"
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - curl -sSL "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip" -o terraform.zip
+      - unzip -q terraform.zip -d /usr/local/bin
+      - rm terraform.zip
+
+  pre_build:
+    commands:
+      - cd infra
+      - >-
+        terraform init
+        -backend-config="bucket=${TF_STATE_BUCKET}"
+        -backend-config="key=planning-poker/terraform.tfstate"
+        -backend-config="region=${AWS_REGION}"
+        -backend-config="use_lockfile=true"
+        -backend-config="encrypt=true"
+        -input=false
+
+  build:
+    commands:
+      - terraform apply -auto-approve tfplan
+      - export HTTP_API_URL=$(terraform output -raw http_api_url)
+      - export WS_URL=$(terraform output -raw websocket_url)
+      - export FRONTEND_BUCKET=$(terraform output -raw frontend_bucket_name)
+      - export CLOUDFRONT_ID=$(terraform output -raw cloudfront_distribution_id)
+      - cd ..
+      # Bake the deployed API URLs into the Angular production environment.
+      - |
+        cat > angular/src/environments/environment.prod.ts <<EOF
+        import { EnvironmentConfig } from '../app/model/environment-config';
+
+        export const environment: EnvironmentConfig = {
+          production: true,
+          httpApiUrl: '${HTTP_API_URL}',
+          websocketUrl: '${WS_URL}'
+        };
+        EOF
+      - cd angular
+      - npm ci --legacy-peer-deps
+      - npm run build
+      - cd ..
+      # Assume the workload account role to sync the built app + invalidate the CDN.
+      - CREDS=$(aws sts assume-role --role-arn "arn:aws:iam::${TARGET_ACCOUNT_ID}:role/${TARGET_ACCOUNT_ROLE}" --role-session-name planning-poker-frontend-deploy --output json)
+      - export AWS_ACCESS_KEY_ID=$(echo "${CREDS}" | jq -r '.Credentials.AccessKeyId')
+      - export AWS_SECRET_ACCESS_KEY=$(echo "${CREDS}" | jq -r '.Credentials.SecretAccessKey')
+      - export AWS_SESSION_TOKEN=$(echo "${CREDS}" | jq -r '.Credentials.SessionToken')
+      - aws s3 sync angular/dist/self-host-planning-poker "s3://${FRONTEND_BUCKET}/" --delete --exclude "index.html" --cache-control "max-age=31536000,public,immutable"
+      - aws s3 sync angular/dist/self-host-planning-poker "s3://${FRONTEND_BUCKET}/" --exclude "*" --include "index.html" --cache-control "no-cache"
+      - aws cloudfront create-invalidation --distribution-id "${CLOUDFRONT_ID}" --paths "/*"

@@ -1,0 +1,105 @@
+name: security
+
+# Static security scanning. Runtime/DAST scanning (OWASP ZAP) runs separately in
+# the CodePipeline Security stage; this workflow covers static analysis of the
+# IaC, Lambda code and secrets.
+#
+# Findings are uploaded to the GitHub Security tab (Code scanning) as SARIF.
+# Scanners are report-only by default (soft-fail) so a single finding does not
+# block the whole run — flip the noted flags to gate on severity.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write # required to upload SARIF to code scanning
+
+jobs:
+  kics:
+    name: KICS (IaC)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run KICS scan
+        uses: checkmarx/kics-github-action@v2
+        with:
+          path: infra,bootstrap,buildspec-plan.yml,buildspec-apply.yml,buildspec-security.yml
+          output_path: kics-results
+          output_formats: json,sarif
+          fail_on: high
+
+      - name: Upload KICS SARIF
+        if: always()
+        continue-on-error: true # code scanning may be unavailable (no GHAS on private repos)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: kics-results/results.sarif
+          category: kics
+
+  checkov:
+    name: Checkov (IaC)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Checkov scan
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: .
+          framework: terraform
+          output_format: sarif
+          output_file_path: checkov-results
+          soft_fail: true # report-only; set false to gate on findings
+
+      - name: Upload Checkov SARIF
+        if: always()
+        continue-on-error: true # code scanning may be unavailable (no GHAS on private repos)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: checkov-results/results.sarif
+          category: checkov
+
+  bandit:
+    name: Bandit (Python SAST)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Bandit
+        run: pip install "bandit[sarif]"
+
+      - name: Run Bandit scan
+        # -r recurse, -ll only medium+ severity. Soft-fail via '|| true' so the
+        # SARIF uploads; drop it to gate the job on findings.
+        run: bandit -r aws/src -f sarif -o bandit-results.sarif -ll || true
+
+      - name: Upload Bandit SARIF
+        if: always()
+        continue-on-error: true # code scanning may be unavailable (no GHAS on private repos)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: bandit-results.sarif
+          category: bandit
+
+  gitleaks:
+    name: Gitleaks (secrets)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history so historical commits are scanned
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

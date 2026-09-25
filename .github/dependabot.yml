@@ -1,15 +1,5 @@
 version: 2
 updates:
-  - package-ecosystem: "docker"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-      day: "friday"
-    assignees:
-      - "axeleroy"
-    labels:
-      - "dependencies"
-      - "docker"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -21,7 +11,7 @@ updates:
         - "dependencies"
         - "github_actions"
   - package-ecosystem: "pip"
-    directory: "/flask"
+    directory: "/aws"
     schedule:
       interval: "monthly"
       day: "friday"

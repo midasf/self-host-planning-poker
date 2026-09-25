@@ -1,0 +1,21 @@
+# Copy to terraform.tfvars and fill in. Run `terraform apply` once in the
+# MANAGEMENT account, then activate the CodeStar connection in the AWS Console.
+
+aws_region = "eu-west-1"
+
+# GitHub source for the pipeline
+github_org  = "your-org-or-user"
+github_repo = "self-host-planning-poker"
+
+# Globally-unique bucket names (management account)
+state_bucket_name     = "planning-poker-tfstate-CHANGE-ME"
+artifacts_bucket_name = "planning-poker-artifacts-CHANGE-ME"
+
+# Workload account the app is deployed into (segregated from management)
+target_account_id   = "111122223333"
+target_account_role = "OrganizationAccountAccessRole"
+
+# Optional: OWASP ZAP target for the Security stage (set to the CloudFront
+# domain after the first deploy), and an email for pipeline notifications.
+site_domain        = ""
+notification_email = ""

@@ -1,0 +1,12 @@
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfplan
+tfplan
+.terraform.lock.hcl
+bootstrap/terraform.tfvars
+
+# Lambda build artifact (produced by infra/lambda.tf archive_file)
+aws/lambda.zip
