@@ -26,17 +26,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Run the KICS Go binary directly. The checkmarx/kics-github-action
+      # wrapper installs and runs nodejs at the end, which currently crashes on
+      # the runner (GLIBC mismatch) after an otherwise-clean scan; the CLI image
+      # has no such dependency. --fail-on gates the job on high/critical only.
       - name: Run KICS scan
-        uses: checkmarx/kics-github-action@v2
-        with:
-          path: infra,bootstrap,buildspec-plan.yml,buildspec-apply.yml,buildspec-security.yml
-          output_path: kics-results
-          output_formats: json,sarif
-          fail_on: high
-          # The action's node-based annotations/summary crash on the runner
-          # (GLIBC mismatch); the Go scan + SARIF still run. Disable them.
-          enable_annotations: false
-          enable_jobs_summary: false
+        run: |
+          mkdir -p kics-results
+          docker run --rm -v "${{ github.workspace }}:/path" checkmarx/kics:latest scan \
+            --path "/path/infra,/path/bootstrap,/path/buildspec-plan.yml,/path/buildspec-apply.yml,/path/buildspec-security.yml" \
+            --output-path /path/kics-results \
+            --report-formats sarif \
+            --fail-on "high,critical"
 
       - name: Upload KICS SARIF
         if: always()
