@@ -18,16 +18,16 @@ jobs:
         name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
           cache: 'pip'
       -
         name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          cd flask; pip install -r requirements.txt
+          cd aws; pip install -r requirements-dev.txt
       -
         name: Run tests
-        run: python -m unittest
+        run: cd aws; python -m pytest
   frontend-tests:
     name: Front-end tests
     if: ${{ false }}  # Disabled as there are no tests

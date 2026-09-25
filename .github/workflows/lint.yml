@@ -31,4 +31,4 @@ jobs:
 
       - uses: astral-sh/ruff-action@v3
         with:
-          args: check flask/
+          args: check aws/src

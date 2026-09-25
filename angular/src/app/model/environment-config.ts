@@ -1,4 +1,7 @@
 export interface EnvironmentConfig {
   production: boolean;
-  backendRootOverride?: string;
+  // Base URL of the HTTP API (POST {httpApiUrl}/create). From SAM output HttpApiUrl.
+  httpApiUrl: string;
+  // WebSocket API endpoint (wss://.../prod). From SAM output WebSocketUrl.
+  websocketUrl: string;
 }
