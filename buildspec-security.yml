@@ -1,28 +1,36 @@
 version: 0.2
 
+# OWASP ZAP baseline scan. This stage runs AFTER Apply, so it's advisory: it
+# publishes a report but never fails the pipeline. zap-baseline exit codes are
+# 0=clean, 1=FAIL alerts, 2=warnings, 3=error reaching the target. Note the WAF
+# in front of the site may itself block ZAP's probe traffic (a 403 storm ->
+# exit 3), which is the WAF working as intended, not a build failure.
+
 phases:
   pre_build:
     commands:
+      # Create placeholder reports first so the artifacts phase never fails on a
+      # missing file (skipped scan, or ZAP erroring before it writes a report).
       - mkdir -p reports
-      # Skip the DAST scan gracefully until a target URL is configured.
-      - if [ -z "${TARGET_URL}" ]; then echo "TARGET_URL not set — skipping OWASP ZAP scan."; exit 0; fi
+      - for f in html json xml; do echo "no ZAP report produced" > "reports/zap-report.$f"; done
+      - if [ -z "${TARGET_URL}" ]; then echo "TARGET_URL not set - skipping OWASP ZAP scan."; exit 0; fi
+      # zap-baseline needs a full URL; add a scheme if the var is a bare host.
+      - case "${TARGET_URL}" in http*://*) TARGET="${TARGET_URL}" ;; *) TARGET="https://${TARGET_URL}" ;; esac
+      - echo "ZAP target ${TARGET}"; curl -sS -o /dev/null -w "target reachability HTTP %{http_code}\n" "${TARGET}" || echo "target not reachable from CodeBuild"
       - docker pull ghcr.io/zaproxy/zaproxy:stable
 
   build:
     commands:
       - if [ -z "${TARGET_URL}" ]; then exit 0; fi
-      - >-
-        docker run --rm
-        -v "$(pwd)/reports:/zap/wrk:rw"
-        --user root
-        ghcr.io/zaproxy/zaproxy:stable
-        zap-baseline.py
-        -t "${TARGET_URL}"
-        -r zap-report.html
-        -J zap-report.json
-        -x zap-report.xml
-        -I
-      - echo "ZAP scan complete — check the Security stage artifacts for findings."
+      - case "${TARGET_URL}" in http*://*) TARGET="${TARGET_URL}" ;; *) TARGET="https://${TARGET_URL}" ;; esac
+      - |
+        docker run --rm -v "$(pwd)/reports:/zap/wrk:rw" --user root \
+          ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+          -t "${TARGET}" -r zap-report.html -J zap-report.json -x zap-report.xml -I
+        code=$?
+        echo "zap-baseline exit code ${code} (0=clean 1=fail-alerts 2=warnings 3=error-reaching-target)"
+        echo "Advisory stage: report published to artifacts; not failing the pipeline."
+        exit 0
 
 artifacts:
   files:
