@@ -8,6 +8,6 @@ import { EnvironmentConfig } from '../app/model/environment-config';
 
 export const environment: EnvironmentConfig = {
   production: false,
-  httpApiUrl: 'https://REPLACE_ME.execute-api.eu-west-1.amazonaws.com',
-  websocketUrl: 'wss://REPLACE_ME.execute-api.eu-west-1.amazonaws.com/prod'
+  httpApiUrl: 'https://REPLACE_ME.cloudfront.net',
+  websocketUrl: 'wss://REPLACE_ME.cloudfront.net/prod'
 };

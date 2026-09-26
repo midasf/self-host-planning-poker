@@ -1,6 +1,7 @@
 import json
 
 from domain.exceptions import PlanningPokerException
+from security import origin_verified
 from store import repo
 
 # CORS is handled by the API Gateway HTTP API cors_configuration (restricted to
@@ -17,6 +18,8 @@ def _error(status, message, code):
 
 def handler(event, context):
     """HTTP API handler for POST /create. Returns the new game id as plain text."""
+    if not origin_verified(event):
+        return _error(403, 'Forbidden', 0)
     try:
         body = json.loads(event.get('body') or '{}')
     except (ValueError, TypeError):

@@ -1,14 +1,9 @@
-# HTTP API for creating games (POST /create).
+# HTTP API for creating games (POST /create). Reached only through CloudFront
+# (same-origin), so no CORS configuration is needed; direct execute-api access
+# is rejected by the origin-verify check in the create Lambda.
 resource "aws_apigatewayv2_api" "http" {
   name          = "${var.project_name}-http"
   protocol_type = "HTTP"
-
-  cors_configuration {
-    allow_origins = ["https://${aws_cloudfront_distribution.this.domain_name}"]
-    allow_methods = ["POST", "OPTIONS"]
-    allow_headers = ["Content-Type"]
-    max_age       = 300
-  }
 
   tags = var.tags
 }

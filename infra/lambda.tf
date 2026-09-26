@@ -41,7 +41,8 @@ resource "aws_lambda_function" "fn" {
 
   environment {
     variables = {
-      TABLE_NAME = aws_dynamodb_table.games.name
+      TABLE_NAME           = aws_dynamodb_table.games.name
+      ORIGIN_VERIFY_SECRET = random_password.origin_secret.result
     }
   }
 

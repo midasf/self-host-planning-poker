@@ -3,11 +3,14 @@ import uuid
 
 from broadcast import broadcast_event, make_management_client, send_ack
 from domain.exceptions import PlanningPokerException
+from security import origin_verified
 from store import repo
 
 
 def connect_handler(event, context):
-    """$connect — accept the socket. The player is registered later via the join action."""
+    """$connect — accept the socket only if it came through CloudFront (origin-verify)."""
+    if not origin_verified(event):
+        return {'statusCode': 401}
     return {'statusCode': 200}
 
 
