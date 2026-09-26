@@ -80,9 +80,9 @@ resource "aws_cloudfront_distribution" "this" {
     response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
   }
 
-  # wss://<cf-domain>/prod -> WebSocket API.
+  # wss://<cf-domain>/prod -> WebSocket API (glob so a trailing path/query still routes here).
   ordered_cache_behavior {
-    path_pattern             = "/prod"
+    path_pattern             = "/prod*"
     target_origin_id         = local.ws_origin_id
     viewer_protocol_policy   = "redirect-to-https"
     allowed_methods          = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
