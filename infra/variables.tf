@@ -26,9 +26,9 @@ variable "waf_rate_limit" {
 }
 
 variable "lambda_reserved_concurrency" {
-  description = "Reserved (and max) concurrent executions for the create + ws_default functions; bounds cost/DoS blast radius. -1 disables it (required on accounts with a low concurrency limit, where PutFunctionConcurrency would drop unreserved below the account minimum). Default is disabled; raise the account limit first, then set e.g. 25."
+  description = "Reserved (and max) concurrent executions for the create + ws_default functions; bounds cost/DoS blast radius. -1 disables it (required on accounts with a low concurrency limit, where PutFunctionConcurrency would drop unreserved below the account minimum)."
   type        = number
-  default     = -1
+  default     = 25
 }
 
 variable "tags" {
