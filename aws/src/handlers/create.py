@@ -3,17 +3,14 @@ import json
 from domain.exceptions import PlanningPokerException
 from store import repo
 
-_CORS_HEADERS = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-}
+# CORS is handled by the API Gateway HTTP API cors_configuration (restricted to
+# the CloudFront origin), so handlers must not also emit CORS headers.
 
 
 def _error(status, message, code):
     return {
         'statusCode': status,
-        'headers': {**_CORS_HEADERS, 'Content-Type': 'application/json'},
+        'headers': {'Content-Type': 'application/json'},
         'body': json.dumps({'error': True, 'message': message, 'code': code}),
     }
 
@@ -32,6 +29,6 @@ def handler(event, context):
         return _error(400, str(e), e.code)
     return {
         'statusCode': 200,
-        'headers': {**_CORS_HEADERS, 'Content-Type': 'text/plain'},
+        'headers': {'Content-Type': 'text/plain'},
         'body': game_id,
     }

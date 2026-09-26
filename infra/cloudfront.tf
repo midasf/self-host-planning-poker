@@ -101,7 +101,9 @@ resource "aws_cloudfront_response_headers_policy" "security" {
 
     # Angular injects component styles as inline <style> tags at runtime, so
     # style-src needs 'unsafe-inline'. Scripts stay 'self' (AOT, no inline JS).
-    # The SPA talks to the HTTP API (https) and WebSocket API (wss) directly.
+    # connect-src is scoped to execute-api in this region (pinning to the exact
+    # API ids would create a dependency cycle with the CORS origin below; it
+    # becomes 'self' once the APIs are fronted through CloudFront — see #1).
     content_security_policy {
       content_security_policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https://*.execute-api.${var.aws_region}.amazonaws.com wss://*.execute-api.${var.aws_region}.amazonaws.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
       override                = true
