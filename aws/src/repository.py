@@ -6,12 +6,31 @@ from typing import Optional
 from boto3.dynamodb.conditions import Key
 
 from domain.deck import Deck
-from domain.exceptions import DeckDoesNotExistError, GameDoesNotExistError, GameNotOngoingError
+from domain.exceptions import (
+    DeckDoesNotExistError,
+    GameDoesNotExistError,
+    GameNotOngoingError,
+    InvalidInputError,
+)
 from domain.game import Game
 from domain.player import Player
 
 # Games and connections are auto-expired after this many seconds of no writes.
 TTL_SECONDS = 24 * 60 * 60
+
+# Upper bounds on user-supplied strings, to prevent unbounded storage/cost abuse.
+MAX_GAME_NAME_LEN = 100
+MAX_PLAYER_NAME_LEN = 50
+
+
+def _validate_name(value, field: str, max_len: int, allow_empty: bool = False) -> str:
+    if not isinstance(value, str):
+        raise InvalidInputError(f'{field} must be a string')
+    if not allow_empty and not value.strip():
+        raise InvalidInputError(f'{field} must not be empty')
+    if len(value) > max_len:
+        raise InvalidInputError(f'{field} must be at most {max_len} characters')
+    return value
 
 
 def _game_pk(game_id: str) -> str:
@@ -83,6 +102,7 @@ class GameRepository:
 
     # --- game lifecycle ---
     def create(self, name: str, deck_name: str = 'FIBONACCI') -> str:
+        name = _validate_name(name, 'Game name', MAX_GAME_NAME_LEN)
         deck = self._get_deck(deck_name)
         game_id = str(uuid.uuid4())
         self.table.put_item(Item={
@@ -97,6 +117,7 @@ class GameRepository:
 
     def join(self, game_id: str, player_id: str, player_name: str,
              is_spectator: bool, connection_id: str) -> tuple[dict, dict]:
+        player_name = _validate_name(player_name, 'Player name', MAX_PLAYER_NAME_LEN, allow_empty=True)
         self._load_game(game_id)  # raises if the game does not exist
         self.table.put_item(Item={
             'PK': _game_pk(game_id),
@@ -140,6 +161,7 @@ class GameRepository:
         return game_id, game.state()
 
     def rename_game(self, game_id: str, game_name: str) -> dict:
+        game_name = _validate_name(game_name, 'Game name', MAX_GAME_NAME_LEN)
         game = self._load_game(game_id)
         game.name = game_name
         self.table.update_item(
@@ -166,6 +188,7 @@ class GameRepository:
         return game.info(), game.state()
 
     def set_player_name(self, game_id: str, player_id: str, player_name: str) -> dict:
+        player_name = _validate_name(player_name, 'Player name', MAX_PLAYER_NAME_LEN, allow_empty=True)
         game = self._load_game(game_id)
         game.get_player(player_id).name = player_name  # raises if player not in game
         self.table.update_item(

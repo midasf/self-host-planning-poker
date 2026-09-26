@@ -7,8 +7,10 @@ from domain.exceptions import (
     GameDoesNotExistError,
     GameNotOngoingError,
     InvalidCardValueError,
+    InvalidInputError,
     SpectatorCannotPlayError,
 )
+from repository import MAX_GAME_NAME_LEN, MAX_PLAYER_NAME_LEN
 
 
 def test_create_stores_game(repo):
@@ -28,6 +30,32 @@ def test_create_other_deck(repo):
 def test_create_invalid_deck(repo):
     with pytest.raises(DeckDoesNotExistError):
         repo.create('Pizza', 'PIZZA')
+
+
+def test_create_rejects_empty_or_missing_name(repo):
+    for bad in (None, '', '   ', 123):
+        with pytest.raises(InvalidInputError):
+            repo.create(bad)
+
+
+def test_create_rejects_overlong_name(repo):
+    with pytest.raises(InvalidInputError):
+        repo.create('x' * (MAX_GAME_NAME_LEN + 1))
+
+
+def test_rename_rejects_overlong_name(repo):
+    game_id = repo.create('Pizza')
+    repo.join(game_id, 'p1', 'John', False, 'conn1')
+    with pytest.raises(InvalidInputError):
+        repo.rename_game(game_id, 'x' * (MAX_GAME_NAME_LEN + 1))
+
+
+def test_join_allows_empty_player_name_but_caps_length(repo):
+    game_id = repo.create('Pizza')
+    info, state = repo.join(game_id, 'p1', '', False, 'conn1')  # empty allowed
+    assert state['p1']['name'] == ''
+    with pytest.raises(InvalidInputError):
+        repo.join(game_id, 'p2', 'x' * (MAX_PLAYER_NAME_LEN + 1), False, 'conn2')
 
 
 def test_join_unknown_game_raises(repo):

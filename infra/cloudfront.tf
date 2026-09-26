@@ -3,12 +3,21 @@ locals {
 }
 
 resource "aws_cloudfront_distribution" "this" {
+  # Log delivery validates the bucket's ACL grants at create time.
+  depends_on = [aws_s3_bucket_acl.logs]
+
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = "index.html"
   price_class         = "PriceClass_100"
   comment             = var.project_name
   web_acl_id          = aws_wafv2_web_acl.this.arn
+
+  logging_config {
+    bucket          = aws_s3_bucket.logs.bucket_domain_name
+    prefix          = "cloudfront/"
+    include_cookies = false
+  }
 
   origin {
     origin_id                = local.frontend_origin_id
