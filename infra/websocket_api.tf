@@ -45,6 +45,9 @@ resource "aws_apigatewayv2_route" "ws_default" {
 }
 
 resource "aws_apigatewayv2_stage" "websocket" {
+  # Access logging needs the account-level CloudWatch Logs role to exist first.
+  depends_on = [aws_api_gateway_account.this]
+
   api_id      = aws_apigatewayv2_api.websocket.id
   name        = "prod"
   auto_deploy = true
