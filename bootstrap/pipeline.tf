@@ -68,6 +68,7 @@ locals {
     { name = "AWS_REGION", value = var.aws_region },
     { name = "TARGET_ACCOUNT_ID", value = var.target_account_id },
     { name = "TARGET_ACCOUNT_ROLE", value = var.target_account_role },
+    { name = "LAMBDA_RESERVED_CONCURRENCY", value = tostring(var.lambda_reserved_concurrency) },
   ]
 }
 

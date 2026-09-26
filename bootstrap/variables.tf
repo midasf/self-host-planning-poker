@@ -40,8 +40,14 @@ variable "target_account_id" {
 
 variable "target_account_role" {
   type        = string
-  description = "Role in the workload account that CodeBuild/Terraform assume to deploy"
-  default     = "OrganizationAccountAccessRole"
+  description = "Role in the workload account that CodeBuild/Terraform assume to deploy. Defaults to the scoped least-privilege role created by workload-bootstrap/ (apply that first). Override to OrganizationAccountAccessRole for the initial admin bootstrap."
+  default     = "planning-poker-deploy"
+}
+
+variable "lambda_reserved_concurrency" {
+  type        = number
+  description = "Passed to infra/ as -var. Reserved (max) concurrency for the create + ws_default Lambdas. -1 disables it (default; required until the account's Lambda concurrency quota is raised). After the quota increase is approved, set e.g. 25 and re-apply bootstrap."
+  default     = -1
 }
 
 variable "site_domain" {
