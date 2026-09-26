@@ -83,6 +83,14 @@ resource "aws_iam_role_policy" "deploy" {
         ]
       },
       {
+        # data.aws_canonical_user_id (for the CloudFront log-bucket ACL) calls
+        # s3:ListAllMyBuckets, which is only valid on resource "*".
+        Sid      = "S3AccountRead"
+        Effect   = "Allow"
+        Action   = ["s3:ListAllMyBuckets", "s3:GetBucketLocation"]
+        Resource = "*"
+      },
+      {
         Sid    = "Iam"
         Effect = "Allow"
         Action = [
@@ -99,9 +107,20 @@ resource "aws_iam_role_policy" "deploy" {
           "iam:DetachRolePolicy",
           "iam:PassRole",
           "iam:TagRole",
-          "iam:UntagRole"
+          "iam:UntagRole",
+          "iam:ListRoleTags",
+          "iam:ListInstanceProfilesForRole"
         ]
         Resource = "arn:${local.partition}:iam::${local.account_id}:role/${var.project_name}*"
+      },
+      {
+        # First-time WAFv2 / CloudFront use in the account creates service-linked
+        # roles (under role/aws-service-role/*, which the project-scoped statement
+        # above does not match).
+        Sid      = "IamServiceLinkedRoles"
+        Effect   = "Allow"
+        Action   = ["iam:CreateServiceLinkedRole"]
+        Resource = "arn:${local.partition}:iam::${local.account_id}:role/aws-service-role/*"
       },
       {
         Sid    = "Logs"
