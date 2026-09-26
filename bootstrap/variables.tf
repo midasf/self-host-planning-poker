@@ -46,8 +46,8 @@ variable "target_account_role" {
 
 variable "lambda_reserved_concurrency" {
   type        = number
-  description = "Passed to infra/ as -var. Reserved (max) concurrency for the create + ws_default Lambdas. -1 disables it (default; required until the account's Lambda concurrency quota is raised). After the quota increase is approved, set e.g. 25 and re-apply bootstrap."
-  default     = -1
+  description = "Passed to infra/ as -var. Reserved (max) concurrency for the create + ws_default Lambdas, bounding cost/DoS blast radius. -1 disables it (for accounts with a low concurrency limit)."
+  default     = 25
 }
 
 variable "site_domain" {
