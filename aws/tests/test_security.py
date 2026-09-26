@@ -15,6 +15,6 @@ def test_origin_verified_rejects_missing_or_wrong(monkeypatch):
     assert not security.origin_verified({'headers': {'X-Origin-Verify': 'nope'}})
 
 
-def test_origin_verified_fails_open_when_unset(monkeypatch):
+def test_origin_verified_fails_closed_when_unset(monkeypatch):
     monkeypatch.delenv('ORIGIN_VERIFY_SECRET', raising=False)
-    assert security.origin_verified({'headers': {}})
+    assert not security.origin_verified({'headers': {'X-Origin-Verify': 'anything'}})
