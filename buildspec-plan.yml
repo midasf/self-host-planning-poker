@@ -32,7 +32,7 @@ phases:
         -var="aws_region=${AWS_REGION}"
         -var="target_account_id=${TARGET_ACCOUNT_ID}"
         -var="target_account_role=${TARGET_ACCOUNT_ROLE}"
-        -var="lambda_reserved_concurrency=${LAMBDA_RESERVED_CONCURRENCY}"
+        -var="lambda_reserved_concurrency=${LAMBDA_RESERVED_CONCURRENCY:--1}"
         -out=tfplan
         -input=false
 
