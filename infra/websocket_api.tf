@@ -54,5 +54,24 @@ resource "aws_apigatewayv2_stage" "websocket" {
     throttling_rate_limit  = 25
   }
 
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.websocket_api.arn
+    format = jsonencode({
+      requestId        = "$context.requestId"
+      ip               = "$context.identity.sourceIp"
+      requestTime      = "$context.requestTime"
+      routeKey         = "$context.routeKey"
+      status           = "$context.status"
+      connectionId     = "$context.connectionId"
+      integrationError = "$context.integrationErrorMessage"
+    })
+  }
+
   tags = var.tags
+}
+
+resource "aws_cloudwatch_log_group" "websocket_api" {
+  name              = "/aws/apigateway/${var.project_name}-websocket"
+  retention_in_days = 14
+  tags              = var.tags
 }

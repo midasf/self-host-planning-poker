@@ -29,9 +29,20 @@ resource "aws_lambda_function" "fn" {
   memory_size      = 256
   architectures    = ["arm64"]
 
+  # Cap concurrency on the write/cost-heavy functions to bound the blast radius
+  # of a request flood. Only create + ws_default reserve (keeps the total draw on
+  # the account's concurrency pool small); set the var to -1 to disable entirely
+  # on accounts with a low concurrency limit.
+  reserved_concurrent_executions = (
+    var.lambda_reserved_concurrency >= 0 && contains(["create", "ws_default"], each.key)
+    ? var.lambda_reserved_concurrency
+    : null
+  )
+
   environment {
     variables = {
-      TABLE_NAME = aws_dynamodb_table.games.name
+      TABLE_NAME           = aws_dynamodb_table.games.name
+      ORIGIN_VERIFY_SECRET = random_password.origin_secret.result
     }
   }
 

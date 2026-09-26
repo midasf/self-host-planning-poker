@@ -25,6 +25,12 @@ variable "waf_rate_limit" {
   default     = 2000
 }
 
+variable "lambda_reserved_concurrency" {
+  description = "Reserved (and max) concurrent executions for the create + ws_default functions; bounds cost/DoS blast radius. Set to -1 to disable (e.g. on accounts with a low concurrency limit)."
+  type        = number
+  default     = 25
+}
+
 variable "tags" {
   type = map(string)
   default = {

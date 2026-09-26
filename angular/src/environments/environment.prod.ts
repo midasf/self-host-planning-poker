@@ -5,6 +5,8 @@ import { EnvironmentConfig } from '../app/model/environment-config';
 
 export const environment: EnvironmentConfig = {
   production: true,
-  httpApiUrl: 'https://REPLACE_ME.execute-api.eu-west-1.amazonaws.com',
-  websocketUrl: 'wss://REPLACE_ME.execute-api.eu-west-1.amazonaws.com/prod'
+  // Both APIs are fronted by CloudFront (same origin). Injected at deploy time
+  // from the Terraform outputs http_api_url / websocket_url.
+  httpApiUrl: 'https://REPLACE_ME.cloudfront.net',
+  websocketUrl: 'wss://REPLACE_ME.cloudfront.net/prod'
 };

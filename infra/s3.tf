@@ -20,6 +20,15 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "frontend" {
   }
 }
 
+resource "aws_s3_bucket_logging" "frontend" {
+  # PutBucketLogging requires the target bucket's LogDelivery ACL grant first.
+  depends_on = [aws_s3_bucket_acl.logs]
+
+  bucket        = aws_s3_bucket.frontend.id
+  target_bucket = aws_s3_bucket.logs.id
+  target_prefix = "s3/frontend/"
+}
+
 resource "aws_cloudfront_origin_access_control" "frontend" {
   name                              = "${var.project_name}-frontend"
   origin_access_control_origin_type = "s3"

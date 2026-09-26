@@ -1,28 +1,37 @@
 import json
 
 from domain.exceptions import PlanningPokerException
+from security import origin_verified
 from store import repo
 
-_CORS_HEADERS = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-}
+# CORS is handled by the API Gateway HTTP API cors_configuration (restricted to
+# the CloudFront origin), so handlers must not also emit CORS headers.
+
+
+def _error(status, message, code):
+    return {
+        'statusCode': status,
+        'headers': {'Content-Type': 'application/json'},
+        'body': json.dumps({'error': True, 'message': message, 'code': code}),
+    }
 
 
 def handler(event, context):
     """HTTP API handler for POST /create. Returns the new game id as plain text."""
+    if not origin_verified(event):
+        return _error(403, 'Forbidden', 0)
     try:
         body = json.loads(event.get('body') or '{}')
-        game_id = repo.create(body['name'], body.get('deck', 'FIBONACCI'))
+    except (ValueError, TypeError):
+        return _error(400, 'Request body must be valid JSON', 0)
+    if not isinstance(body, dict):
+        return _error(400, 'Request body must be a JSON object', 0)
+    try:
+        game_id = repo.create(body.get('name'), body.get('deck', 'FIBONACCI'))
     except PlanningPokerException as e:
-        return {
-            'statusCode': 400,
-            'headers': {**_CORS_HEADERS, 'Content-Type': 'application/json'},
-            'body': json.dumps({'error': True, 'message': str(e), 'code': e.code}),
-        }
+        return _error(400, str(e), e.code)
     return {
         'statusCode': 200,
-        'headers': {**_CORS_HEADERS, 'Content-Type': 'text/plain'},
+        'headers': {'Content-Type': 'text/plain'},
         'body': game_id,
     }
