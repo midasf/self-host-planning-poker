@@ -10,7 +10,7 @@ provider "aws" {
   }
 }
 
-# Temporary: needed to destroy the WAF ACL orphan in us-east-1 state; remove after apply.
+# CloudFront-scoped WAF Web ACLs must be created in us-east-1.
 provider "aws" {
   alias  = "us_east_1"
   region = "us-east-1"
