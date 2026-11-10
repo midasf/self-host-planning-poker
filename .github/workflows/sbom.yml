@@ -27,7 +27,7 @@ jobs:
 
       - name: Generate Node SBOM
         working-directory: angular
-        run: npx --yes @cyclonedx/cyclonedx-npm --package-lock-only --output-file ../sbom-frontend.json
+        run: npx --yes @cyclonedx/cdxgen -t npm --output ../sbom-frontend.json .
 
       - name: Upload Node SBOM
         run: |
