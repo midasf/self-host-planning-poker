@@ -19,12 +19,6 @@ variable "target_account_role" {
   default     = "OrganizationAccountAccessRole"
 }
 
-variable "waf_rate_limit" {
-  description = "Max requests per 5-minute window from a single IP before WAF blocks it."
-  type        = number
-  default     = 2000
-}
-
 variable "lambda_reserved_concurrency" {
   description = "Reserved (and max) concurrent executions for the create + ws_default functions; bounds cost/DoS blast radius. -1 disables it (required on accounts with a low concurrency limit, where PutFunctionConcurrency would drop unreserved below the account minimum)."
   type        = number

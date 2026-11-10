@@ -19,8 +19,6 @@ resource "aws_cloudfront_distribution" "this" {
   default_root_object = "index.html"
   price_class         = "PriceClass_100"
   comment             = var.project_name
-  web_acl_id          = aws_wafv2_web_acl.this.arn
-
   logging_config {
     bucket          = aws_s3_bucket.logs.bucket_domain_name
     prefix          = "cloudfront/"
