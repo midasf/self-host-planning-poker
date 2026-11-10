@@ -10,6 +10,15 @@ provider "aws" {
   }
 }
 
+# Temporary: needed to destroy the WAF ACL orphan in us-east-1 state; remove after apply.
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+  assume_role {
+    role_arn = local.target_role_arn
+  }
+}
+
 data "aws_caller_identity" "current" {}
 data "aws_partition" "current" {}
 
