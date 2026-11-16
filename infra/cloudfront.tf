@@ -97,16 +97,7 @@ resource "aws_cloudfront_distribution" "this" {
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
     cached_methods         = ["GET", "HEAD"]
 
-    forwarded_values {
-      query_string = false
-      cookies {
-        forward = "none"
-      }
-    }
-
-    min_ttl     = 0
-    default_ttl = 300
-    max_ttl     = 3600
+    cache_policy_id = aws_cloudfront_cache_policy.frontend.id
 
     compress                   = true
     response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
@@ -178,5 +169,20 @@ resource "aws_cloudfront_response_headers_policy" "security" {
       protection = true
       override   = true
     }
+  }
+}
+
+resource "aws_cloudfront_cache_policy" "frontend" {
+  name        = "${var.project_name}-frontend"
+  min_ttl     = 0
+  default_ttl = 300
+  max_ttl     = 3600
+
+  parameters_in_cache_key_and_forwarded_to_origin {
+    cookies_config { cookie_behavior = "none" }
+    headers_config { header_behavior = "none" }
+    query_strings_config { query_string_behavior = "none" }
+    enable_accept_encoding_gzip   = true
+    enable_accept_encoding_brotli = true
   }
 }
